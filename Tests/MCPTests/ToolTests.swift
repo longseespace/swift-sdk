@@ -411,4 +411,53 @@ struct ToolTests {
             #expect(Bool(false), "Expected success result")
         }
     }
+
+    @Test("Decoding specific ListTools.Result JSON")
+    func testListToolsResultDecodingSpecificJson() throws {
+        let jsonString = """
+        {
+          "tools": [
+            {
+              "name": "sf_cache_clear",
+              "inputSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          ]
+        }
+        """
+        let jsonData = jsonString.data(using: .utf8)!
+        let decoder = JSONDecoder()
+
+        let result = try decoder.decode(ListTools.Result.self, from: jsonData)
+
+        #expect(result.tools.count == 1)
+        let tool = try #require(result.tools.first)
+        #expect(tool.name == "sf_cache_clear")
+
+        // Check inputSchema details by accessing the underlying dictionary
+        let inputSchema = try #require(tool.inputSchema)
+        guard case let .object(schemaDict) = inputSchema else {
+            #expect(Bool(false), "inputSchema should be an object")
+            return
+        }
+
+        #expect(schemaDict["type"] == .string("object"))
+
+        // Check properties - should be an empty object
+        let properties = try #require(schemaDict["properties"])
+        guard case let .object(propsDict) = properties else {
+            #expect(Bool(false), "properties should be an object")
+            return
+        }
+        #expect(propsDict.isEmpty == true)
+
+        #expect(schemaDict["additionalProperties"] == .bool(false))
+        #expect(schemaDict["$schema"] == .string("http://json-schema.org/draft-07/schema#"))
+
+        #expect(result.nextCursor == nil)
+    }
 }

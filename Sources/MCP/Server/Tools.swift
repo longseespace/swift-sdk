@@ -12,7 +12,7 @@ public struct Tool: Hashable, Codable, Sendable {
     /// The tool name
     public let name: String
     /// The tool description
-    public let description: String
+    public let description: String?
     /// The tool input schema
     public let inputSchema: Value?
 
@@ -182,7 +182,7 @@ public struct Tool: Hashable, Codable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decode(String.self, forKey: .name)
-        description = try container.decode(String.self, forKey: .description)
+        description = try container.decodeIfPresent(String.self, forKey: .description)
         inputSchema = try container.decodeIfPresent(Value.self, forKey: .inputSchema)
         annotations =
             try container.decodeIfPresent(Tool.Annotations.self, forKey: .annotations) ?? .init()
@@ -191,7 +191,7 @@ public struct Tool: Hashable, Codable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
-        try container.encode(description, forKey: .description)
+        try container.encodeIfPresent(description, forKey: .description)
         if let schema = inputSchema {
             try container.encode(schema, forKey: .inputSchema)
         }
